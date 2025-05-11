@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FadeMeBets - Live Odds</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="topnav"></div>
+  <div style="display: flex;">
+    <div id="sidebar"></div>
+    <main style="flex: 1; padding: 2rem;">
+      <h1>Live Odds</h1>
+      <label for="sportDropdown">Select Sport:</label>
+      <select id="sportDropdown">
+        <option value="nfl">NFL</option>
+        <option value="nba">NBA</option>
+        <option value="mlb">MLB</option>
+        <option value="ncaaf">NCAAF</option>
+        <option value="ncaab">NCAAB</option>
+        <option value="ufc">UFC</option>
+      </select>
+      <div id="oddsResults" style="margin-top: 1rem;"></div>
+    </main>
+  </div>
+  <script>
+    const dropdown = document.getElementById("sportDropdown");
+    const resultsDiv = document.getElementById("oddsResults");
+
+    function fetchOdds(sport) {
+      resultsDiv.innerHTML = "Loading odds...";
+      fetch(`/api/scrape_${sport}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.picks || data.picks.length === 0) {
+            resultsDiv.innerHTML = "<p>No odds available.</p>";
+            return;
+          }
+          resultsDiv.innerHTML = data.picks.map(game => {
+            const teams = game.teams?.join(" vs ") || "Unknown Matchup";
+            const spread = game.spread || "N/A";
+            const total = game.total || "N/A";
+            return `<div style='margin-bottom: 1rem; border: 1px solid #ccc; padding: 1rem; border-radius: 6px'>
+              <strong>${teams}</strong><br/>
+              Spread: ${spread} | Total: ${total}
+            </div>`;
+          }).join("");
+        })
+        .catch(err => {
+          resultsDiv.innerHTML = "<p>Error loading odds.</p>";
+          console.error(err);
+        });
+    }
+
+    dropdown.addEventListener("change", (e) => {
+      fetchOdds(e.target.value);
+    });
+
+    // Load default NFL odds
+    window.onload = () => {
+      fetchOdds("nfl");
+    };
+  </script>
+</body>
+</html>
